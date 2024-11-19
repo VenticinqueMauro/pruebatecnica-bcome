@@ -102,7 +102,7 @@ export default function TableContainer() {
                             <TableHead className="text-muted-foreground font-normal text-xs flex items-center gap-2">
                                 Creation date
                                 <span onClick={sortByCreationDate} className="cursor-pointer">
-                                    <img src='/public/sort.svg' alt="Sort Icon" className="w-4 h-4" />
+                                    <img src='/sort.svg' alt="Sort Icon" className="w-4 h-4" />
                                 </span>
                             </TableHead>
                             <TableHead className="text-muted-foreground font-normal text-xs">Closing date</TableHead>
