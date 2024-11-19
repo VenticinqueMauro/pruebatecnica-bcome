@@ -13,7 +13,7 @@ interface BreadcrumbData {
 }
 
 export function BreadcrumbBcome() {
-    
+
     const breadcrumbData: BreadcrumbData = {
         items: [
             { label: "Traceabeality", href: "#" },

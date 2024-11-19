@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from "framer-motion";
 import {
     Table,
     TableBody,
@@ -7,8 +8,8 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { TableRowData } from "@/types/TableRow";
-import { useState } from "react";
 import InputSearch from "./inputSearch";
+import { useState } from "react";
 
 const initialTableData: TableRowData[] = [
     {
@@ -40,29 +41,31 @@ const initialTableData: TableRowData[] = [
     },
 ];
 
-
 export default function TableContainer() {
-
     const [tableData, setTableData] = useState(initialTableData);
     const [searchTerm, setSearchTerm] = useState("");
     const [isSortedAsc, setIsSortedAsc] = useState(true);
+    const [loadingStatus, setLoadingStatus] = useState<number | null>(null);
 
     const filteredData = tableData.filter((row) =>
         row.projectName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-
     const toggleStatus = (index: number) => {
-        setTableData((prevData) =>
-            prevData.map((row, i) =>
-                i === index
-                    ? {
-                        ...row,
-                        status: row.status === "completed" ? "pending" : "completed",
-                    }
-                    : row
-            )
-        );
+        setLoadingStatus(index);
+        setTimeout(() => {
+            setTableData((prevData) =>
+                prevData.map((row, i) =>
+                    i === index
+                        ? {
+                            ...row,
+                            status: row.status === "completed" ? "pending" : "completed",
+                        }
+                        : row
+                )
+            );
+            setLoadingStatus(null);
+        }, 1000); 
     };
 
     const sortByCreationDate = () => {
@@ -72,16 +75,15 @@ export default function TableContainer() {
             return isSortedAsc ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
         });
 
-        setTableData(sortedData); // Actualizar los datos ordenados
-        setIsSortedAsc(!isSortedAsc); // Alternar el orden
+        setTableData(sortedData);
+        setIsSortedAsc(!isSortedAsc);
     };
-
 
     return (
         <>
             <div className="h-[846px] py-4">
                 <InputSearch setSearchTerm={setSearchTerm} />
-                <Table className="pt-4">
+                <Table className="pt-4 overflow-hidden">
                     <TableHeader>
                         <TableRow className="border-none">
                             <TableHead colSpan={3} className="text-start border-b border-black text-black font-medium">
@@ -97,14 +99,9 @@ export default function TableContainer() {
                             <TableHead className="text-muted-foreground font-normal text-xs">Reference type</TableHead>
                             <TableHead className="text-muted-foreground font-normal text-xs">Form URL</TableHead>
                             <TableHead className="text-muted-foreground font-normal text-xs">Status</TableHead>
-                            <TableHead
-                                className="text-muted-foreground font-normal text-xs flex items-center gap-2"
-                            >
+                            <TableHead className="text-muted-foreground font-normal text-xs flex items-center gap-2">
                                 Creation date
-                                <span
-                                    onClick={sortByCreationDate}
-                                    className="cursor-pointer"
-                                >
+                                <span onClick={sortByCreationDate} className="cursor-pointer">
                                     <img src='/public/sort.svg' alt="Sort Icon" className="w-4 h-4" />
                                 </span>
                             </TableHead>
@@ -112,47 +109,59 @@ export default function TableContainer() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredData.map((row: TableRowData, index: number) => (
-                            <TableRow
-                                key={index}
-                                className="odd:bg-[#FBFBFC] border-none"
-                            >
-                                <TableCell className="font-medium justify-end">{row.projectName}</TableCell>
-                                <TableCell>{row.totalRef}</TableCell>
-                                <TableCell>{row.referenceType}</TableCell>
-                                <TableCell>
-                                    <a href={row.formUrl} className="text-[#ccaa5b] underline flex gap-2 items-center">
-                                        Data collection form
-                                        <span>
-                                            <img
-                                                src="/externalLink.svg"
-                                                alt="External link icon"
-                                                className="w-4 h-4 inline-block mr-1"
-                                            />
+                        <AnimatePresence>
+                            {filteredData.map((row: TableRowData, index: number) => (
+                                <motion.tr
+                                    key={index}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    transition={{ duration: 0.5, delay: index * 0.2 }}
+                                    className="odd:bg-[#FBFBFC] border-none "
+                                >
+                                    <TableCell className="font-medium justify-end">{row.projectName}</TableCell>
+                                    <TableCell>{row.totalRef}</TableCell>
+                                    <TableCell>{row.referenceType}</TableCell>
+                                    <TableCell>
+                                        <a href={row.formUrl} className="text-[#ccaa5b] underline flex gap-2 items-center">
+                                            Data collection form
+                                            <span>
+                                                <img
+                                                    src="/externalLink.svg"
+                                                    alt="External link icon"
+                                                    className="w-4 h-4 inline-block mr-1"
+                                                />
+                                            </span>
+                                        </a>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span
+                                            className={`p-2 w-[89px] h-[32px] rounded-[24px] text-sm cursor-pointer capitalize flex items-center justify-center ${row.status === "completed"
+                                                ? "bg-[#527800]/20 text-[#527800]"
+                                                : "bg-[#D1A94C]/20 text-[#D1A94C]"
+                                                }`}
+                                            onClick={() => toggleStatus(index)}
+                                        >
+                                            {loadingStatus === index ? (
+                                                <span
+                                                    className={`spinner-border animate-spin w-[16px] h-[16px] border-2 border-t-transparent rounded-full ${row.status === 'completed' ? 'border-[#527800]' : 'border-[#D1A94C]'}`}  
+                                                ></span>
+                                            ) : (
+                                                row.status
+                                            )}
                                         </span>
-                                    </a>
-                                </TableCell>
-                                <TableCell>
-                                    <span
-                                        className={`p-2 w-[89px] h-[32px] rounded-[24px] text-sm cursor-pointer capitalize ${row.status === "completed"
-                                            ? "bg-[#527800]/20 text-[#527800]"
-                                            : "bg-[#D1A94C]/20 text-[#D1A94C]"
-                                            }`}
-                                        onClick={() => toggleStatus(index)}
-                                    >
-                                        {row.status}
-                                    </span>
-                                </TableCell>
-                                <TableCell>{row.creationDate}</TableCell>
-                                <TableCell>
-                                    <img
-                                        src="/folder.svg"
-                                        alt="Folder Icon"
-                                        className="w-[24.62px] h-[24.62px] cursor-pointer"
-                                    />
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                    </TableCell>
+                                    <TableCell>{row.creationDate}</TableCell>
+                                    <TableCell>
+                                        <img
+                                            src="/folder.svg"
+                                            alt="Folder Icon"
+                                            className="w-[24.62px] h-[24.62px] cursor-pointer"
+                                        />
+                                    </TableCell>
+                                </motion.tr>
+                            ))}
+                        </AnimatePresence>
                     </TableBody>
                 </Table>
             </div>
@@ -167,5 +176,3 @@ export default function TableContainer() {
         </>
     );
 }
-
-
